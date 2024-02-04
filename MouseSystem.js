@@ -37,16 +37,39 @@ RusShm.CA.pluginName = "MouseSystem";
  * @type boolean
  * @default false
  *
+ * @param customCursor
+ * @text Custom Cursor Image
+ * @type file
+ * @dir img/system/
+ * @desc Set the custom image for the cursor. Leave blank to use the default system cursor.
+ *
+ * @command setHoverIcon
+ * @text Set hover Icon
+ * @desc Sets the cursor image
+ * @arg pictureFile
+ * @text Set Hover Icon
+ * @type file
+ * @dir img/system/
+ *
  */
-
+ 
+ PluginManager.registerCommand(RusShm.CA.pluginName, "setHoverIcon", function (args) {});
+ 
+const base_url = "./img/system/";
+    const x_offset = 0;
+    const y_offset = 0;
+    const fallbackStyle = "pointer";
 RusShm.CA.params = PluginManager.parameters(RusShm.CA.pluginName);
 RusShm.CA.activationVariable = Number(RusShm.CA.params["activationVariable"]);
 RusShm.CA.contMenu = String(RusShm.CA.params["contMenu"]);
 
-Scene_Map.prototype.isMenuCalled = function() {
-    return; //Input.isTriggered('menu');
-};
+RusShm.CA.customCursor = String(RusShm.CA.params["customCursor"]);
 
+var isLoaded = false;
+
+Scene_Map.prototype.isMenuCalled = function() {
+    return; 
+};
 
 document.addEventListener("contextmenu", function (event) {
     
@@ -55,42 +78,85 @@ document.addEventListener("contextmenu", function (event) {
 
 document.addEventListener("mousedown", function (event) {
     if (event.button === 0) {
-        // Left click
         handleEventActivation("left_click_activate");
     }
 });
 
 document.addEventListener("mousemove", function (event) {
+	if (cursorChanged == true){changeCursorIcon(RusShm.CA.customCursor);}
+	cursorMove()
+	
     handleEventActivation("mouse_hover_activate");
 });
+let cursorChanged = false;
+function cursorMove(){
+	
+	if (isLoaded){
+		
+		
+		
+    const tileX = $gameMap.canvasToMapX(TouchInput.x);
+    const tileY = $gameMap.canvasToMapY(TouchInput.y);
+    $gameMap.eventsXy(tileX, tileY).forEach(function (event) {
+        if (!event || !event.page()) {
+			changeCursorIcon(RusShm.CA.customCursor)
+			return;}
+		for (let i = 0; i < event.page().list.length; i++) {
+			if (event.page().list[i].code === 657 && event.page().list[i].parameters[0].match("Set Hover Icon")) {
+				let thing = event.page().list[i].parameters[0];
+				thing = thing.split("=");	
+				thing[1] = thing[1].substring(1);
+				changeCursorIcon(thing[1]);
+				cursorChanged = true;
+				}
+				
+			};
+		
+    });
+	}
+}
+
+function changeCursorIcon(text){
+	document.body.style.cursor = RusShm.CA.customCursor == "" 
+            ? "default"
+            : `url("${base_url}${text}.png") ${x_offset} ${y_offset}, ${fallbackStyle}`;
+	
+}
+
+RusShm.CA.Game_Map_setup = Game_Map.prototype.setup;
+Game_Map.prototype.setup = function(mapId) {
+	RusShm.CA.Game_Map_setup.call(this,mapId);
+    changeCursorIcon(RusShm.CA.customCursor);
+	isLoaded = true;
+};
+
 
 function handleEventActivation(tag) {
-	try {
+	if (isLoaded) {
     const tileX = $gameMap.canvasToMapX(TouchInput.x);
     const tileY = $gameMap.canvasToMapY(TouchInput.y);
 	
     $gameMap.eventsXy(tileX, tileY).forEach(function (event) {
         if (!event || !event.page()) return;
         const tagRegex = new RegExp("<" + tag + ">", "i");
+		//console.log(event.page().list);
         if (event.page().list && event.page().list.some(command => command.code === 108 && command.parameters[0].match(tagRegex))) {
 			if (!$gameMap.isEventRunning()) {
-				
+				//document.body.style.cursor = 'none';
 				setActivationType(tag);
 				event.start();
             }
+		
 			
             
         }
 		
     });
 	}
-	catch {
-		console.log("Still loading");
-	}
+	
 }
 
 function setActivationType(type) {
-	console.log(type);
     let value;
 	
     switch (type) {
@@ -125,7 +191,6 @@ Window_ChoiceList.prototype.start = function () {
     switch ($gameMessage.choicePositionType()) {
         case 0: //left
             if (RusShm.CA.lastActivationType === 1 && RusShm.CA.contMenu === "true") {
-                console.log(RusShm.CA.lastActivationType);
                 if (TouchInput.y + this.contentsHeight() < 720) {
                     this.y = TouchInput.y;
                 } else this.y = 720 - this.contentsHeight();
