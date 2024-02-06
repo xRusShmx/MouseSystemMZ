@@ -86,7 +86,7 @@ RusShm.CA.customCursor = String(RusShm.CA.params["customCursor"]);
 var isLoaded = false;
 
 Scene_Map.prototype.isMenuCalled = function() {
-    return; 
+    return Input.isTriggered("menu");
 };
 
 document.addEventListener("contextmenu", function (event) {
