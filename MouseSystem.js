@@ -7,7 +7,7 @@ RusShm.CA.pluginName = "MouseSystem";
 
 //-----------------------------------------------------------------------------
 /*:
- * @plugindesc [1.1] Allows events to be activated with both left and right clicks and triggers actions on mouse hover.
+ * @plugindesc [1.2] Allows events to be activated with both left and right clicks and triggers actions on mouse hover.
  * @url https://boosty.to/russhm
  * @target MZ
  * @author RusShm
@@ -18,6 +18,8 @@ RusShm.CA.pluginName = "MouseSystem";
  *   <right_click_activate>
  *   <left_click_activate>
  *   <mouse_hover_activate>
+ * Changelog:
+ * [1.2] - small fixes for integration with new plugins.
  *
  * Context Menu:
  * If the setting is true, then if the player clicks right mouse button on the event with "<right_click_activate>" tag, the choices would appear on the cursor
@@ -72,7 +74,7 @@ RusShm.CA.pluginName = "MouseSystem";
  */
  
  PluginManager.registerCommand(RusShm.CA.pluginName, "setHoverIcon", function (args) {});
- 
+ var deltaY = 0;
 const base_url = "./img/system/";
     const x_offset = 0;
     const y_offset = 0;
@@ -93,6 +95,13 @@ document.addEventListener("contextmenu", function (event) {
     
     handleEventActivation("right_click_activate");
 });
+
+document.addEventListener('wheel', function(event) {
+  deltaY = event.deltaY;
+ 
+})
+
+
 
 document.addEventListener("mousedown", function (event) {
     if (event.button === 0) {
